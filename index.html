@@ -9,910 +9,531 @@
 <title>TPAT Daily Planner</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=Lato:ital,wght@0,300;0,400;0,700;1,300&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --black: #0a0a0a;
-    --dark: #111111;
-    --gray: #1a1a1a;
-    --gray2: #242424;
-    --gray3: #333;
-    --mid: #555;
-    --light: #888;
-    --white: #f0ebe0;
-    --gold: #c9a84c;
-    --gold2: #e8c97a;
-    --green: #25D366;
-    --red: #e05252;
-  }
-
-  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-
-  html, body {
-    background: var(--black);
-    color: var(--white);
-    font-family: 'Lato', sans-serif;
-    font-weight: 300;
-    min-height: 100vh;
-    overflow-x: hidden;
-  }
-
-  /* ── SPLASH ── */
-  #splash {
-    position: fixed; inset: 0;
-    background: var(--black);
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    z-index: 9999;
-    transition: opacity 0.6s ease, visibility 0.6s;
-  }
-  #splash.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
-
-  .splash-logo {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 96px;
-    color: var(--gold);
-    line-height: 1;
-    animation: pulseGold 1.8s ease-in-out infinite;
-  }
-  .splash-tag {
-    font-family: 'DM Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 5px;
-    color: var(--mid);
-    text-transform: uppercase;
-    margin-top: 12px;
-  }
-  @keyframes pulseGold {
-    0%,100% { opacity: 1; }
-    50% { opacity: 0.5; }
-  }
-
-  /* ── NAV ── */
-  nav {
-    position: sticky; top: 0; z-index: 100;
-    background: var(--black);
-    border-bottom: 1px solid #1a1a1a;
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 0 20px;
-    height: 56px;
-  }
-  .nav-brand {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 28px; letter-spacing: 3px;
-    color: var(--gold);
-  }
-  .nav-date {
-    font-family: 'DM Mono', monospace;
-    font-size: 10px; letter-spacing: 2px;
-    color: var(--light);
-    text-transform: uppercase;
-  }
-  .nav-score {
-    font-family: 'DM Mono', monospace;
-    font-size: 11px;
-    color: var(--gold);
-    background: rgba(201,168,76,0.1);
-    padding: 4px 10px;
-    border-radius: 20px;
-    cursor: pointer;
-    border: 1px solid rgba(201,168,76,0.2);
-  }
-
-  /* ── TABS ── */
-  .tabs {
-    display: flex;
-    border-bottom: 1px solid #1a1a1a;
-    background: var(--dark);
-    position: sticky; top: 56px; z-index: 99;
-  }
-  .tab {
-    flex: 1; padding: 14px 0;
-    font-family: 'DM Mono', monospace;
-    font-size: 10px; letter-spacing: 2px;
-    text-align: center; text-transform: uppercase;
-    color: var(--mid); cursor: pointer;
-    border-bottom: 2px solid transparent;
-    transition: color 0.2s, border-color 0.2s;
-    background: none; border-top: none; border-left: none; border-right: none;
-  }
-  .tab.active { color: var(--gold); border-bottom-color: var(--gold); }
-
-  /* ── PAGES ── */
-  .page { display: none; animation: fadeIn 0.3s ease; }
-  .page.active { display: block; }
-  @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
-
-  /* ── PLANNER PAGE ── */
-  .planner-wrap { padding: 24px 20px 100px; }
-
-  .section-block {
-    margin-bottom: 20px;
-    border: 1px solid #1e1e1e;
-    border-radius: 2px;
-    overflow: hidden;
-    transition: border-color 0.3s;
-  }
-  .section-block:focus-within { border-color: rgba(201,168,76,0.4); }
-
-  .section-head {
-    background: var(--gray);
-    padding: 12px 16px;
-    display: flex; align-items: center; gap: 12px;
-  }
-  .section-letter {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 32px; color: var(--gold);
-    line-height: 1; width: 22px;
-  }
-  .section-info { flex: 1; }
-  .section-title {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 18px; letter-spacing: 2px;
-    color: var(--white);
-  }
-  .section-q {
-    font-size: 10px; color: var(--light);
-    margin-top: 2px; line-height: 1.4;
-  }
-  .section-body { padding: 16px; background: var(--dark); }
-
-  textarea, input[type="text"] {
-    width: 100%;
-    background: transparent;
-    border: none;
-    border-bottom: 1px solid #222;
-    color: var(--white);
-    font-family: 'Lato', sans-serif;
-    font-weight: 300;
-    font-size: 15px;
-    line-height: 1.7;
-    padding: 8px 0;
-    resize: none;
-    outline: none;
-    caret-color: var(--gold);
-    transition: border-color 0.2s;
-  }
-  textarea:focus, input[type="text"]:focus { border-bottom-color: var(--gold); }
-  textarea::placeholder, input::placeholder { color: #333; }
-
-  .plan-item {
-    display: flex; align-items: flex-start; gap: 10px;
-    margin-bottom: 4px;
-  }
-  .plan-num {
-    font-family: 'DM Mono', monospace;
-    font-size: 11px; color: var(--gold);
-    padding-top: 10px; min-width: 16px;
-  }
-  .plan-item input { flex: 1; }
-
-  .track-row { margin-bottom: 16px; }
-  .track-label {
-    font-family: 'DM Mono', monospace;
-    font-size: 9px; letter-spacing: 3px;
-    color: var(--gold); text-transform: uppercase;
-    margin-bottom: 4px;
-  }
-
-  /* Score slider */
-  .score-wrap { padding: 8px 0 4px; }
-  .score-display {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 52px; color: var(--gold);
-    line-height: 1; text-align: center;
-    margin-bottom: 8px;
-  }
-  .score-display span { font-size: 20px; color: var(--mid); }
-  input[type="range"] {
-    -webkit-appearance: none;
-    width: 100%; height: 4px;
-    background: #222; border-radius: 2px; outline: none;
-  }
-  input[type="range"]::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    width: 22px; height: 22px;
-    background: var(--gold); border-radius: 50%;
-    cursor: pointer; box-shadow: 0 0 0 4px rgba(201,168,76,0.15);
-  }
-  .score-labels {
-    display: flex; justify-content: space-between;
-    font-family: 'DM Mono', monospace;
-    font-size: 9px; color: var(--mid);
-    margin-top: 8px;
-  }
-
-  /* Focus word */
-  .focus-row {
-    display: flex; gap: 12px; align-items: center;
-    margin-bottom: 20px;
-    padding: 14px 16px;
-    background: var(--gray);
-    border: 1px solid #1e1e1e;
-  }
-  .focus-label {
-    font-family: 'DM Mono', monospace;
-    font-size: 9px; letter-spacing: 3px;
-    color: var(--gold); text-transform: uppercase;
-    white-space: nowrap;
-  }
-  .focus-input {
-    font-family: 'Bebas Neue', sans-serif !important;
-    font-size: 22px !important;
-    letter-spacing: 2px;
-    color: var(--white) !important;
-    border-bottom: 1px solid #333 !important;
-    padding: 0 0 4px !important;
-  }
-
-  /* ── SAVE BUTTON ── */
-  .save-bar {
-    position: fixed; bottom: 0; left: 0; right: 0;
-    padding: 12px 20px;
-    background: linear-gradient(to top, var(--black) 70%, transparent);
-    display: flex; gap: 10px; z-index: 200;
-  }
-  .btn-save {
-    flex: 1; padding: 16px;
-    background: var(--gold); color: var(--black);
-    font-family: 'DM Mono', monospace;
-    font-size: 11px; letter-spacing: 3px;
-    text-transform: uppercase; border: none;
-    cursor: pointer; font-weight: 500;
-    transition: background 0.2s, transform 0.1s;
-  }
-  .btn-save:active { transform: scale(0.98); }
-  .btn-save.saved { background: #3a9c5a; color: #fff; }
-
-  .btn-share {
-    padding: 16px 20px;
-    background: var(--green); color: #fff;
-    border: none; cursor: pointer;
-    font-size: 18px;
-    transition: opacity 0.2s;
-  }
-  .btn-share:active { opacity: 0.8; }
-
-  /* ── HISTORY PAGE ── */
-  .history-wrap { padding: 24px 20px 100px; }
-
-  .history-empty {
-    text-align: center; padding: 60px 20px;
-    color: var(--mid);
-    font-family: 'DM Mono', monospace;
-    font-size: 11px; letter-spacing: 2px;
-  }
-  .history-empty .big { font-family: 'Bebas Neue', sans-serif; font-size: 48px; color: #1e1e1e; display: block; margin-bottom: 12px; }
-
-  .history-card {
-    border: 1px solid #1a1a1a;
-    margin-bottom: 16px;
-    cursor: pointer;
-    transition: border-color 0.2s;
-    overflow: hidden;
-  }
-  .history-card:hover, .history-card:active { border-color: rgba(201,168,76,0.3); }
-
-  .hcard-head {
-    background: var(--gray);
-    padding: 12px 16px;
-    display: flex; justify-content: space-between; align-items: center;
-  }
-  .hcard-date {
-    font-family: 'DM Mono', monospace;
-    font-size: 10px; letter-spacing: 2px;
-    color: var(--light); text-transform: uppercase;
-  }
-  .hcard-score {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 24px; color: var(--gold);
-  }
-  .hcard-focus {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 16px; color: var(--white);
-    letter-spacing: 2px;
-  }
-  .hcard-body { padding: 12px 16px; background: var(--dark); }
-  .hcard-preview {
-    font-size: 12px; color: var(--mid);
-    line-height: 1.6;
-  }
-  .hcard-actions {
-    padding: 10px 16px;
-    background: var(--dark);
-    border-top: 1px solid #1a1a1a;
-    display: flex; justify-content: flex-end; gap: 12px;
-  }
-  .hcard-del {
-    font-family: 'DM Mono', monospace;
-    font-size: 9px; letter-spacing: 2px;
-    color: var(--red); background: none; border: none;
-    cursor: pointer; text-transform: uppercase; padding: 4px 0;
-  }
-
-  /* ── ABOUT PAGE ── */
-  .about-wrap { padding: 24px 20px 60px; }
-
-  .about-hero {
-    text-align: center; padding: 40px 0 32px;
-    border-bottom: 1px solid #1a1a1a;
-    margin-bottom: 32px;
-  }
-  .about-logo {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 80px; color: var(--gold);
-    line-height: 1;
-  }
-  .about-tagline {
-    font-family: 'DM Mono', monospace;
-    font-size: 10px; letter-spacing: 4px;
-    color: var(--mid); text-transform: uppercase;
-    margin-top: 8px;
-  }
-
-  .about-step {
-    display: flex; gap: 20px;
-    padding: 20px 0;
-    border-bottom: 1px solid #111;
-  }
-  .about-letter {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 56px; color: var(--gold);
-    line-height: 1; width: 40px; flex-shrink: 0;
-  }
-  .about-step-content {}
-  .about-step-word {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 26px; letter-spacing: 2px; color: var(--white);
-  }
-  .about-step-desc {
-    font-size: 13px; color: var(--light);
-    line-height: 1.7; margin-top: 4px;
-  }
-  .about-step-q {
-    font-family: 'DM Mono', monospace;
-    font-size: 10px; color: var(--gold);
-    margin-top: 8px; letter-spacing: 1px;
-  }
-
-  .principles-list { margin-top: 32px; }
-  .principle-item {
-    padding: 16px 0;
-    border-bottom: 1px solid #111;
-    font-size: 14px; color: var(--light);
-    line-height: 1.6;
-    font-style: italic;
-  }
-  .principle-item::before {
-    content: '— ';
-    color: var(--gold);
-  }
-
-  .share-section {
-    margin-top: 32px; padding: 24px;
-    background: var(--gray);
-    border: 1px solid #222;
-    text-align: center;
-  }
-  .share-label {
-    font-family: 'DM Mono', monospace;
-    font-size: 9px; letter-spacing: 3px;
-    color: var(--light); text-transform: uppercase;
-    margin-bottom: 12px;
-  }
-  .share-link {
-    font-family: 'DM Mono', monospace;
-    font-size: 11px; color: var(--gold);
-    word-break: break-all; margin-bottom: 16px;
-    line-height: 1.6;
-  }
-  .btn-copy {
-    background: var(--gold); color: var(--black);
-    font-family: 'DM Mono', monospace;
-    font-size: 10px; letter-spacing: 3px;
-    text-transform: uppercase;
-    border: none; padding: 12px 28px;
-    cursor: pointer; width: 100%;
-    transition: background 0.2s;
-  }
-  .btn-copy.copied { background: #3a9c5a; color: #fff; }
-
-  .btn-whatsapp {
-    display: flex; align-items: center; justify-content: center; gap: 10px;
-    background: var(--green); color: #fff;
-    font-family: 'DM Mono', monospace;
-    font-size: 10px; letter-spacing: 3px;
-    text-transform: uppercase;
-    border: none; padding: 14px 28px;
-    cursor: pointer; width: 100%; margin-top: 10px;
-    text-decoration: none;
-    transition: opacity 0.2s;
-  }
-
-  /* ── TOAST ── */
-  #toast {
-    position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%);
-    background: var(--gray3); color: var(--white);
-    font-family: 'DM Mono', monospace; font-size: 11px;
-    letter-spacing: 2px; padding: 10px 20px;
-    border-radius: 20px; z-index: 9999;
-    opacity: 0; transition: opacity 0.3s;
-    white-space: nowrap; pointer-events: none;
-  }
-  #toast.show { opacity: 1; }
-
-  /* ── STREAK ── */
-  .streak-bar {
-    background: var(--gray);
-    border-bottom: 1px solid #1a1a1a;
-    padding: 10px 20px;
-    display: flex; align-items: center; gap: 12px;
-  }
-  .streak-num {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 28px; color: var(--gold); line-height: 1;
-  }
-  .streak-info { flex: 1; }
-  .streak-title {
-    font-family: 'DM Mono', monospace;
-    font-size: 9px; letter-spacing: 3px;
-    color: var(--light); text-transform: uppercase;
-  }
-  .streak-sub { font-size: 11px; color: var(--mid); margin-top: 2px; }
-
-  .avg-score {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 22px; color: var(--gold);
-  }
-  .avg-label {
-    font-family: 'DM Mono', monospace;
-    font-size: 8px; color: var(--mid);
-    text-transform: uppercase; letter-spacing: 2px;
-  }
+:root{--black:#0a0a0a;--dark:#111;--gray:#1a1a1a;--gray2:#242424;--gray3:#333;--mid:#555;--light:#888;--white:#f0ebe0;--gold:#c9a84c;--gold2:#e8c97a;--green:#25D366;--red:#e05252;}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{background:var(--black);color:var(--white);font-family:'Lato',sans-serif;font-weight:300;min-height:100vh;overflow-x:hidden;}
+/* SPLASH */
+#splash{position:fixed;inset:0;background:var(--black);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity 0.8s,visibility 0.8s;}
+#splash.hidden{opacity:0;visibility:hidden;pointer-events:none;}
+.splash-logo{font-family:'Bebas Neue',sans-serif;font-size:100px;color:var(--gold);line-height:1;animation:sp 1.6s ease-in-out infinite;}
+.splash-tag{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:5px;color:var(--mid);text-transform:uppercase;margin-top:12px;}
+.splash-bar{width:160px;height:2px;background:#1a1a1a;margin-top:36px;border-radius:2px;overflow:hidden;}
+.splash-prog{height:100%;width:0;background:var(--gold);animation:spbar 1.5s ease forwards;}
+@keyframes sp{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.6;transform:scale(.96);}}
+@keyframes spbar{0%{width:0;}100%{width:100%;}}
+/* NAV */
+nav{position:sticky;top:0;z-index:100;background:var(--black);border-bottom:1px solid #1a1a1a;display:flex;align-items:center;justify-content:space-between;padding:0 16px;height:54px;}
+.nav-brand{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:3px;color:var(--gold);}
+.nav-mid{display:flex;flex-direction:column;align-items:center;}
+.nav-date{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--light);text-transform:uppercase;}
+.nav-streak{font-family:'DM Mono',monospace;font-size:9px;color:var(--gold);letter-spacing:1px;margin-top:1px;}
+.nav-xp{font-family:'Bebas Neue',sans-serif;font-size:16px;color:var(--gold);background:rgba(201,168,76,.1);padding:3px 10px;border-radius:20px;border:1px solid rgba(201,168,76,.2);cursor:pointer;}
+/* TABS */
+.tabs{display:flex;border-bottom:1px solid #1a1a1a;background:var(--dark);position:sticky;top:54px;z-index:99;}
+.tab{flex:1;padding:12px 0;font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1px;text-align:center;text-transform:uppercase;color:var(--mid);cursor:pointer;border-bottom:2px solid transparent;transition:color .2s,border-color .2s;background:none;border-top:none;border-left:none;border-right:none;}
+.tab.active{color:var(--gold);border-bottom-color:var(--gold);}
+/* PAGES */
+.page{display:none;animation:fi .3s ease;}
+.page.active{display:block;}
+@keyframes fi{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+/* STATS BAR */
+.stats-bar{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:#1a1a1a;border-bottom:1px solid #1a1a1a;}
+.stat-box{background:var(--black);padding:14px 10px;text-align:center;}
+.stat-val{font-family:'Bebas Neue',sans-serif;font-size:32px;color:var(--gold);line-height:1;}
+.stat-lbl{font-family:'DM Mono',monospace;font-size:7px;letter-spacing:2px;color:var(--mid);text-transform:uppercase;margin-top:2px;}
+/* XP BAR */
+.xp-wrap{padding:12px 16px;background:var(--dark);border-bottom:1px solid #1a1a1a;}
+.xp-top{display:flex;justify-content:space-between;margin-bottom:6px;}
+.xp-lv{font-family:'Bebas Neue',sans-serif;font-size:13px;color:var(--gold);letter-spacing:1px;}
+.xp-pts{font-family:'DM Mono',monospace;font-size:9px;color:var(--mid);}
+.xp-track{height:5px;background:#1a1a1a;border-radius:3px;overflow:hidden;}
+.xp-fill{height:100%;background:linear-gradient(90deg,var(--gold),var(--gold2));border-radius:3px;transition:width 1s ease;}
+/* PLANNER */
+.planner-wrap{padding:16px 16px 100px;}
+.focus-row{display:flex;gap:12px;align-items:center;margin-bottom:16px;padding:14px 16px;background:var(--gray);border:1px solid #1e1e1e;}
+.focus-lbl{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:3px;color:var(--gold);text-transform:uppercase;white-space:nowrap;}
+.focus-inp{font-family:'Bebas Neue',sans-serif!important;font-size:22px!important;letter-spacing:2px;color:var(--white)!important;border-bottom:1px solid #333!important;padding:0 0 4px!important;}
+.sblock{margin-bottom:16px;border:1px solid #1e1e1e;border-radius:2px;overflow:hidden;transition:border-color .3s,box-shadow .3s;}
+.sblock:focus-within{border-color:rgba(201,168,76,.5);box-shadow:0 0 0 1px rgba(201,168,76,.08);}
+.sblock.done{border-color:rgba(58,156,90,.4);}
+.shead{background:var(--gray);padding:10px 14px;display:flex;align-items:center;gap:10px;}
+.sletter{font-family:'Bebas Neue',sans-serif;font-size:30px;color:var(--gold);line-height:1;width:20px;}
+.sinfo{flex:1;}
+.stitle{font-family:'Bebas Neue',sans-serif;font-size:17px;letter-spacing:2px;color:var(--white);}
+.sq{font-size:10px;color:var(--light);margin-top:1px;line-height:1.4;}
+.scheck{font-size:18px;opacity:0;transition:opacity .3s;}
+.sblock.done .scheck{opacity:1;}
+.sbody{padding:14px;background:var(--dark);}
+textarea,input[type=text]{width:100%;background:transparent;border:none;border-bottom:1px solid #222;color:var(--white);font-family:'Lato',sans-serif;font-weight:300;font-size:15px;line-height:1.7;padding:8px 0;resize:none;outline:none;caret-color:var(--gold);transition:border-color .2s;}
+textarea:focus,input[type=text]:focus{border-bottom-color:var(--gold);}
+textarea::placeholder,input::placeholder{color:#2a2a2a;}
+.pi{display:flex;align-items:flex-start;gap:10px;margin-bottom:4px;}
+.pn{font-family:'DM Mono',monospace;font-size:11px;color:var(--gold);padding-top:10px;min-width:16px;}
+.pi input{flex:1;}
+.trow{margin-bottom:14px;}
+.tlbl{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:3px;color:var(--gold);text-transform:uppercase;margin-bottom:4px;}
+/* SCORE */
+.score-wrap{padding:6px 0 4px;}
+.score-emoji{text-align:center;font-size:32px;margin-bottom:8px;}
+.score-num{font-family:'Bebas Neue',sans-serif;font-size:56px;color:var(--gold);line-height:1;text-align:center;margin-bottom:8px;transition:color .3s;}
+.score-num span{font-size:20px;color:var(--mid);}
+input[type=range]{-webkit-appearance:none;width:100%;height:4px;background:#222;border-radius:2px;outline:none;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:24px;height:24px;background:var(--gold);border-radius:50%;cursor:pointer;box-shadow:0 0 0 4px rgba(201,168,76,.15);}
+.score-lbls{display:flex;justify-content:space-between;font-family:'DM Mono',monospace;font-size:9px;color:var(--mid);margin-top:8px;}
+/* SAVE BAR */
+.save-bar{position:fixed;bottom:0;left:0;right:0;padding:10px 16px;background:linear-gradient(to top,var(--black) 70%,transparent);display:flex;gap:10px;z-index:200;}
+.btn-save{flex:1;padding:16px;background:var(--gold);color:var(--black);font-family:'DM Mono',monospace;font-size:11px;letter-spacing:3px;text-transform:uppercase;border:none;cursor:pointer;font-weight:500;transition:background .2s,transform .1s;}
+.btn-save:active{transform:scale(.98);}
+.btn-save.saved{background:#3a9c5a;color:#fff;}
+.btn-wa{padding:16px 18px;background:var(--green);color:#fff;border:none;cursor:pointer;font-size:18px;}
+/* BADGES PAGE */
+.badges-wrap{padding:16px 16px 80px;}
+.badges-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:24px;}
+.badge{background:var(--gray);border:1px solid #222;border-radius:8px;padding:12px 6px;text-align:center;transition:all .3s;position:relative;}
+.badge.earned{border-color:var(--gold);background:rgba(201,168,76,.08);}
+.badge.earned::after{content:'';position:absolute;inset:0;border-radius:8px;box-shadow:0 0 14px rgba(201,168,76,.2);pointer-events:none;}
+.b-icon{font-size:24px;display:block;margin-bottom:4px;filter:grayscale(1);opacity:.25;transition:filter .3s,opacity .3s;}
+.badge.earned .b-icon{filter:none;opacity:1;}
+.b-name{font-family:'DM Mono',monospace;font-size:7px;letter-spacing:1px;color:var(--mid);text-transform:uppercase;line-height:1.3;}
+.badge.earned .b-name{color:var(--gold);}
+/* HISTORY */
+.hist-wrap{padding:16px 16px 80px;}
+.hist-empty{text-align:center;padding:60px 20px;color:var(--mid);font-family:'DM Mono',monospace;font-size:11px;letter-spacing:2px;}
+.hist-empty .big{font-family:'Bebas Neue',sans-serif;font-size:48px;color:#1e1e1e;display:block;margin-bottom:12px;}
+.hcard{border:1px solid #1a1a1a;margin-bottom:14px;overflow:hidden;}
+.hch{background:var(--gray);padding:12px 14px;display:flex;justify-content:space-between;align-items:center;}
+.hcd{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--light);text-transform:uppercase;}
+.hcf{font-family:'Bebas Neue',sans-serif;font-size:15px;color:var(--white);letter-spacing:2px;}
+.hcs{font-family:'Bebas Neue',sans-serif;font-size:26px;color:var(--gold);}
+.hcb{padding:12px 14px;background:var(--dark);}
+.hcp{font-size:12px;color:var(--mid);line-height:1.7;}
+.hca{padding:8px 14px;background:var(--dark);border-top:1px solid #1a1a1a;display:flex;justify-content:flex-end;}
+.hcdel{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--red);background:none;border:none;cursor:pointer;text-transform:uppercase;}
+/* STREAK BAR */
+.streak-bar{background:var(--gray);border-bottom:1px solid #1a1a1a;padding:12px 16px;display:none;align-items:center;gap:12px;}
+.stn{font-family:'Bebas Neue',sans-serif;font-size:36px;color:var(--gold);line-height:1;}
+.sti{flex:1;}
+.stlbl{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:3px;color:var(--light);text-transform:uppercase;}
+.stsub{font-size:11px;color:var(--mid);margin-top:2px;}
+.avg{font-family:'Bebas Neue',sans-serif;font-size:26px;color:var(--gold);text-align:right;}
+.avgl{font-family:'DM Mono',monospace;font-size:8px;color:var(--mid);text-transform:uppercase;letter-spacing:2px;}
+/* ABOUT */
+.about-wrap{padding:20px 16px 60px;}
+.about-hero{text-align:center;padding:28px 0 20px;border-bottom:1px solid #1a1a1a;margin-bottom:20px;}
+.about-logo{font-family:'Bebas Neue',sans-serif;font-size:72px;color:var(--gold);line-height:1;}
+.about-tag{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:4px;color:var(--mid);text-transform:uppercase;margin-top:8px;}
+.astep{display:flex;gap:14px;padding:16px 0;border-bottom:1px solid #111;}
+.altr{font-family:'Bebas Neue',sans-serif;font-size:48px;color:var(--gold);line-height:1;width:34px;flex-shrink:0;}
+.aw{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;color:var(--white);}
+.ad{font-size:13px;color:var(--light);line-height:1.7;margin-top:4px;}
+.aq{font-family:'DM Mono',monospace;font-size:10px;color:var(--gold);margin-top:8px;letter-spacing:1px;}
+.pr{padding:13px 0;border-bottom:1px solid #111;font-size:13px;color:var(--light);line-height:1.6;font-style:italic;}
+.pr::before{content:'— ';color:var(--gold);}
+.share-sec{margin-top:20px;padding:20px;background:var(--gray);border:1px solid #222;text-align:center;}
+.slbl{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:3px;color:var(--light);text-transform:uppercase;margin-bottom:10px;}
+.surl{font-family:'DM Mono',monospace;font-size:11px;color:var(--gold);word-break:break-all;margin-bottom:14px;line-height:1.6;}
+.btn-copy{background:var(--gold);color:var(--black);font-family:'DM Mono',monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;border:none;padding:12px 28px;cursor:pointer;width:100%;transition:background .2s;}
+.btn-copy.copied{background:#3a9c5a;color:#fff;}
+.btn-wap{display:flex;align-items:center;justify-content:center;gap:10px;background:var(--green);color:#fff;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;border:none;padding:14px 28px;cursor:pointer;width:100%;margin-top:10px;text-decoration:none;}
+.anote{margin-top:16px;padding:16px;background:var(--dark);border:1px solid #222;}
+.anote-t{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:3px;color:var(--gold);text-transform:uppercase;margin-bottom:8px;}
+.anote-b{font-size:12px;color:var(--mid);line-height:1.8;}
+.anote-b a{color:var(--gold);}
+/* TOAST */
+#toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:var(--gray3);color:var(--white);font-family:'DM Mono',monospace;font-size:11px;letter-spacing:2px;padding:10px 20px;border-radius:20px;z-index:9999;opacity:0;transition:opacity .3s;white-space:nowrap;pointer-events:none;}
+#toast.show{opacity:1;}
+/* REWARD */
+#rpop{position:fixed;inset:0;background:rgba(0,0,0,.88);display:flex;align-items:center;justify-content:center;z-index:9998;opacity:0;visibility:hidden;transition:opacity .4s;}
+#rpop.show{opacity:1;visibility:visible;}
+.rcard{background:var(--gray);border:1px solid var(--gold);padding:36px 28px;text-align:center;max-width:290px;width:90%;animation:rpop .4s cubic-bezier(.34,1.56,.64,1) forwards;}
+@keyframes rpop{from{transform:scale(.7);opacity:0;}to{transform:scale(1);opacity:1;}}
+.rico{font-size:60px;display:block;margin-bottom:14px;animation:bonce .6s ease .3s both;}
+@keyframes bonce{0%{transform:translateY(0);}40%{transform:translateY(-14px);}70%{transform:translateY(-5px);}100%{transform:translateY(0);}}
+.rtitle{font-family:'Bebas Neue',sans-serif;font-size:30px;color:var(--gold);letter-spacing:2px;margin-bottom:6px;}
+.rmsg{font-size:13px;color:var(--light);line-height:1.6;margin-bottom:20px;}
+.rclose{background:var(--gold);color:var(--black);font-family:'DM Mono',monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;border:none;padding:12px 32px;cursor:pointer;width:100%;}
+/* CONFETTI */
+.cfp{position:fixed;width:8px;height:8px;top:-10px;border-radius:2px;animation:cff linear forwards;z-index:9997;pointer-events:none;}
+@keyframes cff{0%{transform:translateY(0) rotate(0deg);opacity:1;}100%{transform:translateY(110vh) rotate(720deg);opacity:0;}}
 </style>
 </head>
 <body>
-
-<!-- SPLASH -->
 <div id="splash">
   <div class="splash-logo">TPAT</div>
   <div class="splash-tag">Think · Plan · Act · Track</div>
+  <div class="splash-bar"><div class="splash-prog"></div></div>
 </div>
 
-<!-- NAV -->
+<div id="rpop" onclick="closeR()">
+  <div class="rcard" onclick="event.stopPropagation()">
+    <span class="rico" id="rico">🏆</span>
+    <div class="rtitle" id="rtitle">Achievement!</div>
+    <div class="rmsg" id="rmsg">You earned a badge.</div>
+    <button class="rclose" onclick="closeR()">Awesome — Keep Going!</button>
+  </div>
+</div>
+
 <nav>
   <div class="nav-brand">TPAT</div>
-  <div class="nav-date" id="navDate"></div>
-  <div class="nav-score" id="navScore" onclick="goTab('history')">— / 10</div>
+  <div class="nav-mid">
+    <div class="nav-date" id="navDate"></div>
+    <div class="nav-streak" id="navStreak"></div>
+  </div>
+  <div class="nav-xp" id="navXP" onclick="goTab('badges')">0 XP</div>
 </nav>
 
-<!-- TABS -->
 <div class="tabs">
   <button class="tab active" onclick="goTab('planner')">📋 Today</button>
+  <button class="tab" onclick="goTab('badges')">🏆 Badges</button>
   <button class="tab" onclick="goTab('history')">📅 History</button>
   <button class="tab" onclick="goTab('about')">ℹ About</button>
 </div>
 
-<!-- ══ PLANNER PAGE ══ -->
+<!-- PLANNER -->
 <div class="page active" id="page-planner">
+  <div class="stats-bar">
+    <div class="stat-box"><div class="stat-val" id="s1">0</div><div class="stat-lbl">🔥 Streak</div></div>
+    <div class="stat-box"><div class="stat-val" id="s2">0</div><div class="stat-lbl">📅 Days</div></div>
+    <div class="stat-box"><div class="stat-val" id="s3">—</div><div class="stat-lbl">⭐ Avg</div></div>
+  </div>
+  <div class="xp-wrap">
+    <div class="xp-top"><div class="xp-lv" id="xpLv">LEVEL 1 — STARTER</div><div class="xp-pts" id="xpPts">0 / 100 XP</div></div>
+    <div class="xp-track"><div class="xp-fill" id="xpFill" style="width:0%"></div></div>
+  </div>
   <div class="planner-wrap">
-
-    <!-- Focus Word -->
     <div class="focus-row">
-      <div class="focus-label">Focus Word</div>
-      <input type="text" class="focus-input" id="focusWord" placeholder="E.g. DISCIPLINE" maxlength="20">
+      <div class="focus-lbl">Today's Focus</div>
+      <input type="text" class="focus-inp" id="focusWord" placeholder="E.G. DISCIPLINE" maxlength="20">
     </div>
-
-    <!-- THINK -->
-    <div class="section-block">
-      <div class="section-head">
-        <div class="section-letter">T</div>
-        <div class="section-info">
-          <div class="section-title">Think</div>
-          <div class="section-q">What do I need to think clearly about today?</div>
-        </div>
-      </div>
-      <div class="section-body">
-        <textarea id="think" rows="4" placeholder="Write your thoughts here. What challenge, decision, or focus needs clarity today?"></textarea>
-      </div>
+    <div class="sblock" id="b-think">
+      <div class="shead"><div class="sletter">T</div><div class="sinfo"><div class="stitle">Think</div><div class="sq">What do I need to think clearly about today?</div></div><div class="scheck">✅</div></div>
+      <div class="sbody"><textarea id="think" rows="4" placeholder="What challenge or decision needs clarity today?"></textarea></div>
     </div>
-
-    <!-- PLAN -->
-    <div class="section-block">
-      <div class="section-head">
-        <div class="section-letter">P</div>
-        <div class="section-info">
-          <div class="section-title">Plan</div>
-          <div class="section-q">My top 3 actions today</div>
-        </div>
-      </div>
-      <div class="section-body">
-        <div class="plan-item"><div class="plan-num">1.</div><input type="text" id="plan1" placeholder="First priority action"></div>
-        <div class="plan-item"><div class="plan-num">2.</div><input type="text" id="plan2" placeholder="Second priority action"></div>
-        <div class="plan-item"><div class="plan-num">3.</div><input type="text" id="plan3" placeholder="Third priority action"></div>
-        <div style="margin-top:14px;">
-          <div class="track-label">Why do these matter?</div>
-          <textarea id="planWhy" rows="2" placeholder="One line. Why are these 3 the right focus today?"></textarea>
-        </div>
+    <div class="sblock" id="b-plan">
+      <div class="shead"><div class="sletter">P</div><div class="sinfo"><div class="stitle">Plan</div><div class="sq">My top 3 actions today</div></div><div class="scheck">✅</div></div>
+      <div class="sbody">
+        <div class="pi"><div class="pn">1.</div><input type="text" id="plan1" placeholder="First priority action"></div>
+        <div class="pi"><div class="pn">2.</div><input type="text" id="plan2" placeholder="Second priority action"></div>
+        <div class="pi"><div class="pn">3.</div><input type="text" id="plan3" placeholder="Third priority action"></div>
+        <div style="margin-top:12px;"><div class="tlbl">Why do these matter?</div><textarea id="planWhy" rows="2" placeholder="One line. Why are these the right focus?"></textarea></div>
       </div>
     </div>
-
-    <!-- ACT -->
-    <div class="section-block">
-      <div class="section-head">
-        <div class="section-letter">A</div>
-        <div class="section-info">
-          <div class="section-title">Act</div>
-          <div class="section-q">What did I actually do today? Be honest.</div>
-        </div>
-      </div>
-      <div class="section-body">
-        <div class="plan-item"><div class="plan-num">✓</div><input type="text" id="act1" placeholder="What you actually completed"></div>
-        <div class="plan-item"><div class="plan-num">✓</div><input type="text" id="act2" placeholder="Second thing done"></div>
-        <div class="plan-item"><div class="plan-num">✓</div><input type="text" id="act3" placeholder="Third thing done"></div>
+    <div class="sblock" id="b-act">
+      <div class="shead"><div class="sletter">A</div><div class="sinfo"><div class="stitle">Act</div><div class="sq">What did I actually do? Be honest.</div></div><div class="scheck">✅</div></div>
+      <div class="sbody">
+        <div class="pi"><div class="pn">✓</div><input type="text" id="act1" placeholder="What you actually completed"></div>
+        <div class="pi"><div class="pn">✓</div><input type="text" id="act2" placeholder="Second thing done"></div>
+        <div class="pi"><div class="pn">✓</div><input type="text" id="act3" placeholder="Third thing done"></div>
       </div>
     </div>
-
-    <!-- TRACK -->
-    <div class="section-block">
-      <div class="section-head">
-        <div class="section-letter">T</div>
-        <div class="section-info">
-          <div class="section-title">Track</div>
-          <div class="section-q">End of day review</div>
-        </div>
-      </div>
-      <div class="section-body">
-        <div class="track-row">
-          <div class="track-label">What went well?</div>
-          <textarea id="trackWell" rows="2" placeholder="Celebrate the wins, big or small."></textarea>
-        </div>
-        <div class="track-row">
-          <div class="track-label">What didn't go well?</div>
-          <textarea id="trackBad" rows="2" placeholder="Be honest. No growth without honesty."></textarea>
-        </div>
-        <div class="track-row">
-          <div class="track-label">What will I do differently tomorrow?</div>
-          <textarea id="trackChange" rows="2" placeholder="One specific change you'll make."></textarea>
-        </div>
-        <div class="track-row">
-          <div class="track-label">Day Score</div>
+    <div class="sblock" id="b-track">
+      <div class="shead"><div class="sletter">T</div><div class="sinfo"><div class="stitle">Track</div><div class="sq">End of day review</div></div><div class="scheck">✅</div></div>
+      <div class="sbody">
+        <div class="trow"><div class="tlbl">What went well?</div><textarea id="tw" rows="2" placeholder="Celebrate the wins, big or small."></textarea></div>
+        <div class="trow"><div class="tlbl">What didn't go well?</div><textarea id="tb" rows="2" placeholder="Be honest. No growth without honesty."></textarea></div>
+        <div class="trow"><div class="tlbl">What will I do differently tomorrow?</div><textarea id="tc" rows="2" placeholder="One specific change you'll make."></textarea></div>
+        <div class="trow">
+          <div class="tlbl">Day Score</div>
           <div class="score-wrap">
-            <div class="score-display" id="scoreDisplay">5 <span>/ 10</span></div>
-            <input type="range" id="scoreRange" min="1" max="10" value="5" oninput="updateScore(this.value)">
-            <div class="score-labels"><span>1 — Disaster</span><span>10 — Perfect</span></div>
+            <div class="score-emoji" id="sEmoji">😐</div>
+            <div class="score-num" id="sNum">5 <span>/ 10</span></div>
+            <input type="range" id="scoreRange" min="1" max="10" value="5" oninput="updScore(this.value)">
+            <div class="score-lbls"><span>1 — Disaster</span><span>10 — Perfect</span></div>
           </div>
         </div>
       </div>
     </div>
-
   </div>
-
-  <!-- SAVE BAR -->
   <div class="save-bar">
     <button class="btn-save" id="saveBtn" onclick="saveDay()">Save Today's Entry</button>
-    <button class="btn-share" onclick="shareToday()" title="Share on WhatsApp">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-    </button>
+    <button class="btn-wa" onclick="shareWA()" title="Share on WhatsApp"><svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg></button>
   </div>
 </div>
 
-<!-- ══ HISTORY PAGE ══ -->
+<!-- BADGES -->
+<div class="page" id="page-badges">
+  <div class="badges-wrap">
+    <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:3px;color:var(--light);text-transform:uppercase;margin-bottom:4px;">Your Level</div>
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:40px;color:var(--gold);margin-bottom:2px;" id="bxp">0 XP</div>
+    <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--mid);margin-bottom:16px;" id="blv">Level 1 — Starter</div>
+    <div class="xp-track" style="margin-bottom:24px;"><div class="xp-fill" id="xpFill2" style="width:0%"></div></div>
+    <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:3px;color:var(--light);text-transform:uppercase;margin-bottom:12px;">Badges</div>
+    <div class="badges-grid" id="badgeGrid"></div>
+    <div style="padding:16px;background:var(--gray);border:1px solid #1e1e1e;">
+      <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:3px;color:var(--gold);text-transform:uppercase;margin-bottom:10px;">How to Earn XP</div>
+      <div style="font-size:12px;color:var(--mid);line-height:2.2;">
+        ✏️ Fill Think section → <span style="color:var(--gold)">+10 XP</span><br>
+        📌 Add all 3 plans → <span style="color:var(--gold)">+15 XP</span><br>
+        ⚡ Log all 3 actions → <span style="color:var(--gold)">+15 XP</span><br>
+        📊 Complete Track section → <span style="color:var(--gold)">+10 XP</span><br>
+        💯 Score 8 or above → <span style="color:var(--gold)">+20 XP bonus</span><br>
+        🔥 7-day streak badge → <span style="color:var(--gold)">+50 XP bonus</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- HISTORY -->
 <div class="page" id="page-history">
-  <div id="streakBar" class="streak-bar" style="display:none">
-    <div>
-      <div class="streak-title">Current Streak</div>
-      <div class="streak-num" id="streakNum">0</div>
-    </div>
-    <div class="streak-info">
-      <div class="streak-sub">days in a row</div>
-    </div>
-    <div style="text-align:right">
-      <div class="avg-score" id="avgScore">—</div>
-      <div class="avg-label">Avg Score</div>
-    </div>
+  <div class="streak-bar" id="streakBar">
+    <div><div class="stlbl">🔥 Streak</div><div class="stn" id="streakN">0</div></div>
+    <div class="sti"><div class="stsub">days in a row</div></div>
+    <div><div class="avg" id="avgS">—</div><div class="avgl">Avg Score</div></div>
   </div>
-  <div class="history-wrap" id="historyList"></div>
+  <div class="hist-wrap" id="histList"></div>
 </div>
 
-<!-- ══ ABOUT PAGE ══ -->
+<!-- ABOUT -->
 <div class="page" id="page-about">
   <div class="about-wrap">
-    <div class="about-hero">
-      <div class="about-logo">TPAT</div>
-      <div class="about-tagline">A Daily Execution System</div>
+    <div class="about-hero"><div class="about-logo">TPAT</div><div class="about-tag">A Daily Execution System</div></div>
+    <div class="astep"><div class="altr">T</div><div><div class="aw">Think</div><div class="ad">Before you move, gain clarity. Most mistakes happen in the thinking stage — or the absence of it.</div><div class="aq">→ What do I need to think clearly about today?</div></div></div>
+    <div class="astep"><div class="altr">P</div><div><div class="aw">Plan</div><div class="ad">A plan converts thought into direction. Choose your top 3 actions. Not ten — three that truly matter.</div><div class="aq">→ What are my 3 most important actions today?</div></div></div>
+    <div class="astep"><div class="altr">A</div><div><div class="aw">Act</div><div class="ad">Execution is where frameworks die. Act before you feel ready. Discipline carries you when motivation doesn't.</div><div class="aq">→ What did I actually do today?</div></div></div>
+    <div class="astep"><div class="altr">T</div><div><div class="aw">Track</div><div class="ad">Tracking closes the loop. The person who tracks is the person who compounds — day after day.</div><div class="aq">→ What went well? What didn't? What changes tomorrow?</div></div></div>
+    <div style="margin-top:20px;">
+      <div class="pr">Discipline is the bridge between where you are and where you want to be.</div>
+      <div class="pr">Always think before you act.</div>
+      <div class="pr">Choose the pain of discipline over the pain of regret.</div>
+      <div class="pr">The person who tracks is the person who compounds.</div>
+      <div class="pr">Don't chase. Prepare. Build before you beg.</div>
+      <div class="pr">One day done right is better than seven days done carelessly.</div>
     </div>
-
-    <div class="about-step">
-      <div class="about-letter">T</div>
-      <div class="about-step-content">
-        <div class="about-step-word">Think</div>
-        <div class="about-step-desc">Before you move, gain clarity. Most mistakes happen in the thinking stage — or the absence of it. Think before you act.</div>
-        <div class="about-step-q">→ What do I need to think clearly about today?</div>
-      </div>
-    </div>
-    <div class="about-step">
-      <div class="about-letter">P</div>
-      <div class="about-step-content">
-        <div class="about-step-word">Plan</div>
-        <div class="about-step-desc">A plan converts thought into direction. Without it, effort scatters. Choose your top 3 actions. Not ten — three that truly matter.</div>
-        <div class="about-step-q">→ What are my 3 most important actions today?</div>
-      </div>
-    </div>
-    <div class="about-step">
-      <div class="about-letter">A</div>
-      <div class="about-step-content">
-        <div class="about-step-word">Act</div>
-        <div class="about-step-desc">Execution is where frameworks die. Act before you feel ready. Discipline carries you when motivation doesn't show up.</div>
-        <div class="about-step-q">→ What did I actually do today?</div>
-      </div>
-    </div>
-    <div class="about-step">
-      <div class="about-letter">T</div>
-      <div class="about-step-content">
-        <div class="about-step-word">Track</div>
-        <div class="about-step-desc">Tracking closes the loop. The person who tracks is the person who compounds — day after day, week after week.</div>
-        <div class="about-step-q">→ What went well? What didn't? What changes tomorrow?</div>
-      </div>
-    </div>
-
-    <div class="principles-list">
-      <div class="principle-item">Discipline is the bridge between where you are and where you want to be.</div>
-      <div class="principle-item">Always think before you act.</div>
-      <div class="principle-item">Choose the pain of discipline over the pain of regret.</div>
-      <div class="principle-item">The person who tracks is the person who compounds.</div>
-      <div class="principle-item">Don't chase. Prepare. Build before you beg.</div>
-      <div class="principle-item">One day done right is better than seven days done carelessly.</div>
-    </div>
-
-    <div class="share-section" style="margin-top:32px;">
-      <div class="share-label">Share TPAT with your network</div>
-      <div class="share-link" id="appUrl">Loading...</div>
+    <div class="share-sec">
+      <div class="slbl">Share TPAT</div>
+      <div class="surl">https://lawrenceorengo05-crypto.github.io/TPAT/</div>
       <button class="btn-copy" id="copyBtn" onclick="copyLink()">Copy Link</button>
-      <a id="waShareBtn" href="#" target="_blank" class="btn-whatsapp">
+      <a href="https://wa.me/?text=🔥 *TPAT Daily Planner* — Think. Plan. Act. Track.%0A%0AThe free daily execution system. Open it here 👇%0Ahttps://lawrenceorengo05-crypto.github.io/TPAT/%0A%0ANo download. Works on any phone." target="_blank" class="btn-wap">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
         Share on WhatsApp
       </a>
     </div>
+    <div class="anote">
+      <div class="anote-t">📊 Track Who Uses Your App — Free</div>
+      <div class="anote-b">
+        Go to <a href="https://counter.dev" target="_blank">counter.dev</a> — sign up free with your GitHub link. They give you one line of code to paste into your app. You will then see:<br><br>
+        • How many people visit each day<br>
+        • Which country they come from<br>
+        • What device they use<br>
+        • How they found your app<br><br>
+        It takes 5 minutes. Costs nothing.
+      </div>
+    </div>
   </div>
 </div>
 
-<!-- TOAST -->
 <div id="toast"></div>
 
 <script>
-// ── STATE ──
-const TODAY = new Date().toISOString().split('T')[0];
-const STORAGE_KEY = 'tpat_entries';
+const BADGES=[
+  {id:'first',  icon:'🌱',name:'First Step',   desc:'Completed your first TPAT entry.',        xp:10},
+  {id:'day3',   icon:'🔥',name:'3-Day Fire',   desc:'3 days in a row. The habit is forming.',  xp:30},
+  {id:'day7',   icon:'⚡',name:'Week Warrior', desc:'One full week of execution.',              xp:70},
+  {id:'day14',  icon:'💎',name:'Diamond Mind', desc:'14 days. Elite discipline.',               xp:140},
+  {id:'day30',  icon:'👑',name:'30-Day King',  desc:'30 days. You are built different.',        xp:300},
+  {id:'p10',    icon:'💯',name:'Perfect Day',  desc:'Scored a perfect 10/10.',                  xp:50},
+  {id:'h5',     icon:'⭐',name:'High 5',       desc:'Scored 8+ on five different days.',        xp:60},
+  {id:'allp',   icon:'📌',name:'Planner',      desc:'Filled all 3 plans in one day.',           xp:15},
+  {id:'alla',   icon:'⚡',name:'Executor',     desc:'Logged all 3 actions completed.',          xp:15},
+  {id:'full',   icon:'🏆',name:'Full TPAT',    desc:'Completed every section in one day.',      xp:40},
+  {id:'lv5',    icon:'🚀',name:'Level 5',      desc:'Reached Level 5.',                         xp:100},
+  {id:'lv10',   icon:'🌟',name:'Legend',       desc:'Reached Level 10. Unstoppable.',           xp:200},
+];
+const LEVELS=[
+  {l:1,n:'STARTER',x:0},{l:2,n:'CONSISTENT',x:100},{l:3,n:'DISCIPLINED',x:250},
+  {l:4,n:'FOCUSED',x:450},{l:5,n:'EXECUTOR',x:700},{l:6,n:'WARRIOR',x:1000},
+  {l:7,n:'CHAMPION',x:1400},{l:8,n:'ELITE',x:1900},{l:9,n:'MASTER',x:2500},{l:10,n:'LEGEND',x:3200},
+];
+const EMO=['','😩','😟','😔','😕','😐','🙂','😊','😄','🔥','💯'];
+const SC=['','#e05252','#e05252','#e08052','#e0b052','#c9a84c','#c9a84c','#8bc34a','#4caf50','#4caf50','#3a9c5a'];
+const TODAY=new Date().toISOString().split('T')[0];
+const EK='tpat_e',BK='tpat_b',XK='tpat_x';
+const ge=()=>{try{return JSON.parse(localStorage.getItem(EK)||'{}');}catch{return{};}};
+const se=d=>localStorage.setItem(EK,JSON.stringify(d));
+const gb=()=>{try{return JSON.parse(localStorage.getItem(BK)||'[]');}catch{return[];}};
+const sb=d=>localStorage.setItem(BK,JSON.stringify(d));
+const gx=()=>parseInt(localStorage.getItem(XK)||'0');
+const ax=n=>localStorage.setItem(XK,gx()+n);
+const v=id=>(document.getElementById(id).value||'').trim();
 
-function getEntries() {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); }
-  catch(e) { return {}; }
-}
-function saveEntries(data) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-}
-
-// ── INIT ──
-window.addEventListener('load', () => {
-  // Hide splash
-  setTimeout(() => document.getElementById('splash').classList.add('hidden'), 1200);
-
-  // Set date in nav
-  const d = new Date();
-  document.getElementById('navDate').textContent = d.toLocaleDateString('en-KE', { weekday:'short', month:'short', day:'numeric' });
-
-  // Load today's entry
-  loadToday();
-  updateNavScore();
-
-  // Set app URL for sharing
-  const url = window.location.href;
-  document.getElementById('appUrl').textContent = url;
-  document.getElementById('waShareBtn').href = `https://wa.me/?text=${encodeURIComponent('🔥 TPAT Daily Planner — Think. Plan. Act. Track.\n\nThis is the daily execution system I use to stay focused and build discipline every day.\n\nOpen it here 👇\n' + url)}`;
+window.addEventListener('load',()=>{
+  setTimeout(()=>document.getElementById('splash').classList.add('hidden'),1600);
+  const d=new Date();
+  document.getElementById('navDate').textContent=d.toLocaleDateString('en-KE',{weekday:'short',month:'short',day:'numeric'});
+  loadToday(); refreshStats(); renderBadges(); updXP();
 });
 
-function loadToday() {
-  const entries = getEntries();
-  const entry = entries[TODAY];
-  if (!entry) return;
-  document.getElementById('focusWord').value = entry.focusWord || '';
-  document.getElementById('think').value = entry.think || '';
-  document.getElementById('plan1').value = entry.plan1 || '';
-  document.getElementById('plan2').value = entry.plan2 || '';
-  document.getElementById('plan3').value = entry.plan3 || '';
-  document.getElementById('planWhy').value = entry.planWhy || '';
-  document.getElementById('act1').value = entry.act1 || '';
-  document.getElementById('act2').value = entry.act2 || '';
-  document.getElementById('act3').value = entry.act3 || '';
-  document.getElementById('trackWell').value = entry.trackWell || '';
-  document.getElementById('trackBad').value = entry.trackBad || '';
-  document.getElementById('trackChange').value = entry.trackChange || '';
-  const score = entry.score || 5;
-  document.getElementById('scoreRange').value = score;
-  updateScore(score);
+function loadToday(){
+  const e=ge()[TODAY]; if(!e) return;
+  ['focusWord','think','plan1','plan2','plan3','planWhy','act1','act2','act3','tw','tb','tc'].forEach(id=>{ document.getElementById(id).value=e[id]||''; });
+  const sc=e.score||5; document.getElementById('scoreRange').value=sc; updScore(sc); chkDone();
 }
 
-function updateScore(val) {
-  document.getElementById('scoreDisplay').innerHTML = `${val} <span>/ 10</span>`;
-  document.getElementById('navScore').textContent = `${val} / 10`;
+function updScore(val){
+  document.getElementById('sNum').innerHTML=`${val} <span>/ 10</span>`;
+  document.getElementById('sNum').style.color=SC[val]||'var(--gold)';
+  document.getElementById('sEmoji').textContent=EMO[val]||'😐';
 }
 
-function updateNavScore() {
-  const entries = getEntries();
-  const entry = entries[TODAY];
-  if (entry && entry.score) {
-    document.getElementById('navScore').textContent = `${entry.score} / 10`;
+function calcStreak(entries){
+  let streak=0; const t=new Date(); t.setHours(0,0,0,0);
+  for(let i=0;i<=365;i++){const d=new Date(t);d.setDate(d.getDate()-i);const k=d.toISOString().split('T')[0];if(entries[k])streak++;else if(i>0)break;}
+  return streak;
+}
+
+function refreshStats(){
+  const entries=ge(); const keys=Object.keys(entries); const total=keys.length;
+  const streak=calcStreak(entries);
+  const avg=total?(keys.reduce((a,k)=>a+(entries[k].score||0),0)/total).toFixed(1):'—';
+  document.getElementById('s1').textContent=streak;
+  document.getElementById('s2').textContent=total;
+  document.getElementById('s3').textContent=avg;
+  document.getElementById('navStreak').textContent=streak>0?`🔥 ${streak} day streak`:'';
+  document.getElementById('streakN').textContent=streak;
+  document.getElementById('avgS').textContent=avg;
+  if(total>0) document.getElementById('streakBar').style.display='flex';
+}
+
+function updXP(){
+  const xp=gx(); let cur=LEVELS[0],nxt=LEVELS[1];
+  for(let i=0;i<LEVELS.length;i++){if(xp>=LEVELS[i].x){cur=LEVELS[i];nxt=LEVELS[i+1]||null;}}
+  const lx=xp-cur.x,lm=nxt?nxt.x-cur.x:100,pct=Math.min(100,(lx/lm)*100);
+  const lbl=`LEVEL ${cur.l} — ${cur.n}`;
+  const pts=nxt?`${xp} / ${nxt.x} XP`:`${xp} XP — MAX`;
+  document.getElementById('xpLv').textContent=lbl;
+  document.getElementById('xpPts').textContent=pts;
+  document.getElementById('xpFill').style.width=pct+'%';
+  document.getElementById('navXP').textContent=xp+' XP';
+  document.getElementById('bxp').textContent=xp+' XP';
+  document.getElementById('blv').textContent=lbl;
+  if(document.getElementById('xpFill2')) document.getElementById('xpFill2').style.width=pct+'%';
+}
+
+function chkDone(){
+  const map={['b-think']:v('think'),['b-plan']:v('plan1')&&v('plan2')&&v('plan3'),['b-act']:v('act1')&&v('act2')&&v('act3'),['b-track']:v('tw')&&v('tb')&&v('tc')};
+  Object.entries(map).forEach(([id,cond])=>document.getElementById(id).classList.toggle('done',!!cond));
+}
+
+function saveDay(){
+  const entries=ge(); const isNew=!entries[TODAY];
+  const entry={date:TODAY,savedAt:new Date().toISOString(),focusWord:v('focusWord'),think:v('think'),plan1:v('plan1'),plan2:v('plan2'),plan3:v('plan3'),planWhy:v('planWhy'),act1:v('act1'),act2:v('act2'),act3:v('act3'),tw:v('tw'),tb:v('tb'),tc:v('tc'),score:parseInt(document.getElementById('scoreRange').value)};
+  entries[TODAY]=entry; se(entries);
+  if(isNew){
+    let xg=0;
+    if(entry.think) xg+=10;
+    if(entry.plan1&&entry.plan2&&entry.plan3) xg+=15;
+    if(entry.act1&&entry.act2&&entry.act3) xg+=15;
+    if(entry.tw&&entry.tb&&entry.tc) xg+=10;
+    if(entry.score>=8) xg+=20;
+    if(xg>0) ax(xg);
+    chkBadges(entries); updXP(); refreshStats();
+  }
+  chkDone();
+  const btn=document.getElementById('saveBtn');
+  btn.textContent='✓ Saved'; btn.classList.add('saved');
+  setTimeout(()=>{btn.textContent="Save Today's Entry";btn.classList.remove('saved');},2000);
+  toast('Entry saved ✓');
+}
+
+function chkBadges(entries){
+  const earned=gb(); const keys=Object.keys(entries); const total=keys.length;
+  const entry=entries[TODAY]; const streak=calcStreak(entries);
+  const newB=[];
+  const grant=id=>{if(!earned.includes(id)){earned.push(id);const b=BADGES.find(x=>x.id===id);if(b){ax(b.xp);newB.push(b);}}};
+  if(total>=1) grant('first');
+  if(streak>=3) grant('day3');
+  if(streak>=7) grant('day7');
+  if(streak>=14) grant('day14');
+  if(streak>=30) grant('day30');
+  if(entry&&entry.score===10) grant('p10');
+  if(entry&&entry.plan1&&entry.plan2&&entry.plan3) grant('allp');
+  if(entry&&entry.act1&&entry.act2&&entry.act3) grant('alla');
+  if(keys.filter(k=>entries[k].score>=8).length>=5) grant('h5');
+  if(entry&&entry.think&&entry.plan1&&entry.plan2&&entry.plan3&&entry.act1&&entry.act2&&entry.act3&&entry.tw&&entry.tb&&entry.tc) grant('full');
+  const xp=gx();
+  if(xp>=700) grant('lv5');
+  if(xp>=3200) grant('lv10');
+  sb(earned); renderBadges(); updXP();
+  if(newB.length>0) showR(newB[0]);
+}
+
+function renderBadges(){
+  const earned=gb();
+  const g=document.getElementById('badgeGrid'); if(!g) return;
+  g.innerHTML=BADGES.map(b=>`<div class="badge ${earned.includes(b.id)?'earned':''}" title="${b.desc}"><span class="b-icon">${b.icon}</span><div class="b-name">${b.name}</div></div>`).join('');
+}
+
+function showR(b){
+  document.getElementById('rico').textContent=b.icon;
+  document.getElementById('rtitle').textContent=b.name;
+  document.getElementById('rmsg').textContent=b.desc+' +'+b.xp+' XP earned!';
+  document.getElementById('rpop').classList.add('show');
+  confetti();
+}
+function closeR(){ document.getElementById('rpop').classList.remove('show'); }
+
+function confetti(){
+  const cols=['#c9a84c','#e8c97a','#fff','#25D366','#4a9eff','#ff6b6b'];
+  for(let i=0;i<50;i++){
+    const el=document.createElement('div'); el.className='cfp';
+    el.style.cssText=`left:${Math.random()*100}vw;background:${cols[Math.floor(Math.random()*cols.length)]};animation-duration:${1.5+Math.random()*2}s;animation-delay:${Math.random()*0.4}s;`;
+    document.body.appendChild(el); setTimeout(()=>el.remove(),3500);
   }
 }
 
-// ── SAVE ──
-function saveDay() {
-  const entries = getEntries();
-  entries[TODAY] = {
-    date: TODAY,
-    focusWord: document.getElementById('focusWord').value,
-    think: document.getElementById('think').value,
-    plan1: document.getElementById('plan1').value,
-    plan2: document.getElementById('plan2').value,
-    plan3: document.getElementById('plan3').value,
-    planWhy: document.getElementById('planWhy').value,
-    act1: document.getElementById('act1').value,
-    act2: document.getElementById('act2').value,
-    act3: document.getElementById('act3').value,
-    trackWell: document.getElementById('trackWell').value,
-    trackBad: document.getElementById('trackBad').value,
-    trackChange: document.getElementById('trackChange').value,
-    score: parseInt(document.getElementById('scoreRange').value),
-    savedAt: new Date().toISOString()
-  };
-  saveEntries(entries);
-
-  const btn = document.getElementById('saveBtn');
-  btn.textContent = '✓ Saved';
-  btn.classList.add('saved');
-  setTimeout(() => { btn.textContent = 'Save Today\'s Entry'; btn.classList.remove('saved'); }, 2000);
-  showToast('Entry saved ✓');
-  updateNavScore();
+function shareWA(){
+  const d=new Date().toLocaleDateString('en-KE',{weekday:'long',month:'long',day:'numeric'});
+  const sc=document.getElementById('scoreRange').value;
+  let m=`📋 *TPAT Daily Entry — ${d}*\n`;
+  if(v('focusWord')) m+=`\n🎯 Focus: *${v('focusWord')}*\n`;
+  m+=`\n📌 *PLAN*\n`;
+  ['plan1','plan2','plan3'].forEach((id,i)=>{if(v(id)) m+=`${i+1}. ${v(id)}\n`;});
+  if(v('tw')) m+=`\n✅ *Win:* ${v('tw')}\n`;
+  if(v('tc')) m+=`\n🔄 *Tomorrow:* ${v('tc')}\n`;
+  m+=`\n📊 *Day Score: ${sc}/10*\n\n🔗 https://lawrenceorengo05-crypto.github.io/TPAT/\n_TPAT | Think. Plan. Act. Track._`;
+  window.open(`https://wa.me/?text=${encodeURIComponent(m)}`,'_blank');
 }
 
-// ── SHARE TODAY ──
-function shareToday() {
-  const e = {
-    focusWord: document.getElementById('focusWord').value,
-    plan1: document.getElementById('plan1').value,
-    plan2: document.getElementById('plan2').value,
-    plan3: document.getElementById('plan3').value,
-    score: document.getElementById('scoreRange').value,
-    trackWell: document.getElementById('trackWell').value,
-    trackChange: document.getElementById('trackChange').value,
-  };
-  const d = new Date().toLocaleDateString('en-KE', { weekday:'long', month:'long', day:'numeric' });
-  let msg = `📋 *TPAT Daily Entry — ${d}*\n`;
-  if (e.focusWord) msg += `\n🎯 Focus: *${e.focusWord}*\n`;
-  msg += `\n📌 *PLAN*\n`;
-  if (e.plan1) msg += `1. ${e.plan1}\n`;
-  if (e.plan2) msg += `2. ${e.plan2}\n`;
-  if (e.plan3) msg += `3. ${e.plan3}\n`;
-  if (e.trackWell) msg += `\n✅ *What went well:* ${e.trackWell}\n`;
-  if (e.trackChange) msg += `\n🔄 *Tomorrow:* ${e.trackChange}\n`;
-  msg += `\n📊 *Day Score: ${e.score}/10*\n`;
-  msg += `\n─────────────────\n_TPAT | Think. Plan. Act. Track._`;
-  window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
-}
-
-// ── TABS ──
-function goTab(name) {
-  document.querySelectorAll('.tab').forEach((t,i) => {
-    const names = ['planner','history','about'];
-    t.classList.toggle('active', names[i] === name);
-  });
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+function goTab(name){
+  const names=['planner','badges','history','about'];
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',names[i]===name));
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById('page-'+name).classList.add('active');
-  if (name === 'history') renderHistory();
+  if(name==='history') renderHist();
   window.scrollTo(0,0);
 }
 
-// ── HISTORY ──
-function renderHistory() {
-  const entries = getEntries();
-  const keys = Object.keys(entries).sort((a,b) => b.localeCompare(a));
-  const list = document.getElementById('historyList');
-
-  if (keys.length === 0) {
-    list.innerHTML = `<div class="history-empty"><span class="big">TPAT</span>No entries yet.<br>Complete your first day to see history.</div>`;
-    document.getElementById('streakBar').style.display = 'none';
-    return;
-  }
-
-  // Streak
-  let streak = 0;
-  const today = new Date(); today.setHours(0,0,0,0);
-  for (let i = 0; i <= 365; i++) {
-    const d = new Date(today); d.setDate(d.getDate() - i);
-    const key = d.toISOString().split('T')[0];
-    if (entries[key]) streak++;
-    else if (i > 0) break;
-  }
-  document.getElementById('streakNum').textContent = streak;
-  const scores = keys.map(k => entries[k].score || 0);
-  const avg = (scores.reduce((a,b) => a+b, 0) / scores.length).toFixed(1);
-  document.getElementById('avgScore').textContent = avg;
-  document.getElementById('streakBar').style.display = 'flex';
-
-  // Cards
-  list.innerHTML = keys.map(key => {
-    const e = entries[key];
-    const d = new Date(key + 'T00:00:00');
-    const label = d.toLocaleDateString('en-KE', { weekday:'short', month:'short', day:'numeric', year:'numeric' });
-    const plans = [e.plan1, e.plan2, e.plan3].filter(Boolean);
-    const scoreColor = e.score >= 8 ? '#3a9c5a' : e.score >= 5 ? '#c9a84c' : '#e05252';
-    return `
-      <div class="history-card">
-        <div class="hcard-head">
-          <div>
-            <div class="hcard-date">${label}</div>
-            ${e.focusWord ? `<div class="hcard-focus">${e.focusWord}</div>` : ''}
-          </div>
-          <div class="hcard-score" style="color:${scoreColor}">${e.score || '—'}<span style="font-size:14px;color:#555">/10</span></div>
-        </div>
-        ${plans.length ? `<div class="hcard-body">
-          <div class="hcard-preview">${plans.map((p,i) => `${i+1}. ${p}`).join('<br>')}</div>
-        </div>` : ''}
-        <div class="hcard-actions">
-          <button class="hcard-del" onclick="deleteEntry('${key}')">Delete</button>
-        </div>
-      </div>`;
+function renderHist(){
+  const entries=ge(); const keys=Object.keys(entries).sort((a,b)=>b.localeCompare(a));
+  const list=document.getElementById('histList');
+  if(!keys.length){list.innerHTML=`<div class="hist-empty"><span class="big">TPAT</span>No entries yet.<br>Save your first day to see history.</div>`;return;}
+  list.innerHTML=keys.map(key=>{
+    const e=entries[key];
+    const d=new Date(key+'T00:00:00').toLocaleDateString('en-KE',{weekday:'short',month:'short',day:'numeric',year:'numeric'});
+    const plans=[e.plan1,e.plan2,e.plan3].filter(Boolean);
+    const sc=e.score>=8?'#3a9c5a':e.score>=5?'#c9a84c':'#e05252';
+    return `<div class="hcard">
+      <div class="hch"><div><div class="hcd">${d}</div>${e.focusWord?`<div class="hcf">${e.focusWord}</div>`:''}</div><div class="hcs" style="color:${sc}">${EMO[e.score]||''} ${e.score||'—'}<span style="font-size:13px;color:#555">/10</span></div></div>
+      ${plans.length?`<div class="hcb"><div class="hcp">${plans.map((p,i)=>`${i+1}. ${p}`).join('<br>')}</div></div>`:''}
+      <div class="hca"><button class="hcdel" onclick="delEntry('${key}')">Delete</button></div>
+    </div>`;
   }).join('');
 }
 
-function deleteEntry(key) {
-  if (!confirm('Delete this entry?')) return;
-  const entries = getEntries();
-  delete entries[key];
-  saveEntries(entries);
-  renderHistory();
-  showToast('Entry deleted');
+function delEntry(key){if(!confirm('Delete this entry?'))return;const e=ge();delete e[key];se(e);renderHist();refreshStats();toast('Deleted');}
+
+function copyLink(){
+  const url='https://lawrenceorengo05-crypto.github.io/TPAT/';
+  navigator.clipboard&&navigator.clipboard.writeText(url).then(()=>{const b=document.getElementById('copyBtn');b.textContent='✓ Copied!';b.classList.add('copied');setTimeout(()=>{b.textContent='Copy Link';b.classList.remove('copied');},2000);});
 }
 
-// ── COPY LINK ──
-function copyLink() {
-  const url = window.location.href;
-  if (navigator.clipboard) {
-    navigator.clipboard.writeText(url).then(() => {
-      const btn = document.getElementById('copyBtn');
-      btn.textContent = '✓ Copied!';
-      btn.classList.add('copied');
-      setTimeout(() => { btn.textContent = 'Copy Link'; btn.classList.remove('copied'); }, 2000);
-    });
-  } else {
-    // Fallback
-    const el = document.createElement('textarea');
-    el.value = url; document.body.appendChild(el);
-    el.select(); document.execCommand('copy');
-    document.body.removeChild(el);
-    showToast('Link copied ✓');
-  }
-}
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2000);}
 
-// ── TOAST ──
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2000);
-}
-
-// Auto-save on input
-['think','plan1','plan2','plan3','planWhy','act1','act2','act3','trackWell','trackBad','trackChange','focusWord'].forEach(id => {
-  const el = document.getElementById(id);
-  if (el) el.addEventListener('input', () => {
-    clearTimeout(el._timer);
-    el._timer = setTimeout(saveDay, 1500);
-  });
+['focusWord','think','plan1','plan2','plan3','planWhy','act1','act2','act3','tw','tb','tc'].forEach(id=>{
+  const el=document.getElementById(id);
+  if(el) el.addEventListener('input',()=>{chkDone();clearTimeout(el._t);el._t=setTimeout(saveDay,2000);});
 });
-document.getElementById('scoreRange').addEventListener('input', () => {
-  updateScore(document.getElementById('scoreRange').value);
-  clearTimeout(window._scoreTimer);
-  window._scoreTimer = setTimeout(saveDay, 1500);
-});
+document.getElementById('scoreRange').addEventListener('input',()=>{updScore(document.getElementById('scoreRange').value);clearTimeout(window._st);window._st=setTimeout(saveDay,2000);});
 </script>
 </body>
 </html>
