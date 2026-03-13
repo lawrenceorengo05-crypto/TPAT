@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="theme-color" content="#0a0a0a">
+<title>TPAT Daily Planner</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=Lato:ital,wght@0,300;0,400;0,700;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --black: #0a0a0a;
+    --dark: #111111;
+    --gray: #1a1a1a;
+    --gray2: #242424;
+    --gray3: #333;
+    --mid: #555;
+    --light: #888;
+    --white: #f0ebe0;
+    --gold: #c9a84c;
+    --gold2: #e8c97a;
+    --green: #25D366;
+    --red: #e05252;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+  html, body {
+    background: var(--black);
+    color: var(--white);
+    font-family: 'Lato', sans-serif;
+    font-weight: 300;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── SPLASH ── */
+  #splash {
+    position: fixed; inset: 0;
+    background: var(--black);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    z-index: 9999;
+    transition: opacity 0.6s ease, visibility 0.6s;
+  }
+  #splash.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+
+  .splash-logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 96px;
+    color: var(--gold);
+    line-height: 1;
+    animation: pulseGold 1.8s ease-in-out infinite;
+  }
+  .splash-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 5px;
+    color: var(--mid);
+    text-transform: uppercase;
+    margin-top: 12px;
+  }
+  @keyframes pulseGold {
+    0%,100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: sticky; top: 0; z-index: 100;
+    background: var(--black);
+    border-bottom: 1px solid #1a1a1a;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 20px;
+    height: 56px;
+  }
+  .nav-brand {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px; letter-spacing: 3px;
+    color: var(--gold);
+  }
+  .nav-date {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px; letter-spacing: 2px;
+    color: var(--light);
+    text-transform: uppercase;
+  }
+  .nav-score {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--gold);
+    background: rgba(201,168,76,0.1);
+    padding: 4px 10px;
+    border-radius: 20px;
+    cursor: pointer;
+    border: 1px solid rgba(201,168,76,0.2);
+  }
+
+  /* ── TABS ── */
+  .tabs {
+    display: flex;
+    border-bottom: 1px solid #1a1a1a;
+    background: var(--dark);
+    position: sticky; top: 56px; z-index: 99;
+  }
+  .tab {
+    flex: 1; padding: 14px 0;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px; letter-spacing: 2px;
+    text-align: center; text-transform: uppercase;
+    color: var(--mid); cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: color 0.2s, border-color 0.2s;
+    background: none; border-top: none; border-left: none; border-right: none;
+  }
+  .tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+
+  /* ── PAGES ── */
+  .page { display: none; animation: fadeIn 0.3s ease; }
+  .page.active { display: block; }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+
+  /* ── PLANNER PAGE ── */
+  .planner-wrap { padding: 24px 20px 100px; }
+
+  .section-block {
+    margin-bottom: 20px;
+    border: 1px solid #1e1e1e;
+    border-radius: 2px;
+    overflow: hidden;
+    transition: border-color 0.3s;
+  }
+  .section-block:focus-within { border-color: rgba(201,168,76,0.4); }
+
+  .section-head {
+    background: var(--gray);
+    padding: 12px 16px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .section-letter {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 32px; color: var(--gold);
+    line-height: 1; width: 22px;
+  }
+  .section-info { flex: 1; }
+  .section-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 18px; letter-spacing: 2px;
+    color: var(--white);
+  }
+  .section-q {
+    font-size: 10px; color: var(--light);
+    margin-top: 2px; line-height: 1.4;
+  }
+  .section-body { padding: 16px; background: var(--dark); }
+
+  textarea, input[type="text"] {
+    width: 100%;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid #222;
+    color: var(--white);
+    font-family: 'Lato', sans-serif;
+    font-weight: 300;
+    font-size: 15px;
+    line-height: 1.7;
+    padding: 8px 0;
+    resize: none;
+    outline: none;
+    caret-color: var(--gold);
+    transition: border-color 0.2s;
+  }
+  textarea:focus, input[type="text"]:focus { border-bottom-color: var(--gold); }
+  textarea::placeholder, input::placeholder { color: #333; }
+
+  .plan-item {
+    display: flex; align-items: flex-start; gap: 10px;
+    margin-bottom: 4px;
+  }
+  .plan-num {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px; color: var(--gold);
+    padding-top: 10px; min-width: 16px;
+  }
+  .plan-item input { flex: 1; }
+
+  .track-row { margin-bottom: 16px; }
+  .track-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px; letter-spacing: 3px;
+    color: var(--gold); text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  /* Score slider */
+  .score-wrap { padding: 8px 0 4px; }
+  .score-display {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 52px; color: var(--gold);
+    line-height: 1; text-align: center;
+    margin-bottom: 8px;
+  }
+  .score-display span { font-size: 20px; color: var(--mid); }
+  input[type="range"] {
+    -webkit-appearance: none;
+    width: 100%; height: 4px;
+    background: #222; border-radius: 2px; outline: none;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 22px; height: 22px;
+    background: var(--gold); border-radius: 50%;
+    cursor: pointer; box-shadow: 0 0 0 4px rgba(201,168,76,0.15);
+  }
+  .score-labels {
+    display: flex; justify-content: space-between;
+    font-family: 'DM Mono', monospace;
+    font-size: 9px; color: var(--mid);
+    margin-top: 8px;
+  }
+
+  /* Focus word */
+  .focus-row {
+    display: flex; gap: 12px; align-items: center;
+    margin-bottom: 20px;
+    padding: 14px 16px;
+    background: var(--gray);
+    border: 1px solid #1e1e1e;
+  }
+  .focus-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px; letter-spacing: 3px;
+    color: var(--gold); text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .focus-input {
+    font-family: 'Bebas Neue', sans-serif !important;
+    font-size: 22px !important;
+    letter-spacing: 2px;
+    color: var(--white) !important;
+    border-bottom: 1px solid #333 !important;
+    padding: 0 0 4px !important;
+  }
+
+  /* ── SAVE BUTTON ── */
+  .save-bar {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    padding: 12px 20px;
+    background: linear-gradient(to top, var(--black) 70%, transparent);
+    display: flex; gap: 10px; z-index: 200;
+  }
+  .btn-save {
+    flex: 1; padding: 16px;
+    background: var(--gold); color: var(--black);
+    font-family: 'DM Mono', monospace;
+    font-size: 11px; letter-spacing: 3px;
+    text-transform: uppercase; border: none;
+    cursor: pointer; font-weight: 500;
+    transition: background 0.2s, transform 0.1s;
+  }
+  .btn-save:active { transform: scale(0.98); }
+  .btn-save.saved { background: #3a9c5a; color: #fff; }
+
+  .btn-share {
+    padding: 16px 20px;
+    background: var(--green); color: #fff;
+    border: none; cursor: pointer;
+    font-size: 18px;
+    transition: opacity 0.2s;
+  }
+  .btn-share:active { opacity: 0.8; }
+
+  /* ── HISTORY PAGE ── */
+  .history-wrap { padding: 24px 20px 100px; }
+
+  .history-empty {
+    text-align: center; padding: 60px 20px;
+    color: var(--mid);
+    font-family: 'DM Mono', monospace;
+    font-size: 11px; letter-spacing: 2px;
+  }
+  .history-empty .big { font-family: 'Bebas Neue', sans-serif; font-size: 48px; color: #1e1e1e; display: block; margin-bottom: 12px; }
+
+  .history-card {
+    border: 1px solid #1a1a1a;
+    margin-bottom: 16px;
+    cursor: pointer;
+    transition: border-color 0.2s;
+    overflow: hidden;
+  }
+  .history-card:hover, .history-card:active { border-color: rgba(201,168,76,0.3); }
+
+  .hcard-head {
+    background: var(--gray);
+    padding: 12px 16px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .hcard-date {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px; letter-spacing: 2px;
+    color: var(--light); text-transform: uppercase;
+  }
+  .hcard-score {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 24px; color: var(--gold);
+  }
+  .hcard-focus {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 16px; color: var(--white);
+    letter-spacing: 2px;
+  }
+  .hcard-body { padding: 12px 16px; background: var(--dark); }
+  .hcard-preview {
+    font-size: 12px; color: var(--mid);
+    line-height: 1.6;
+  }
+  .hcard-actions {
+    padding: 10px 16px;
+    background: var(--dark);
+    border-top: 1px solid #1a1a1a;
+    display: flex; justify-content: flex-end; gap: 12px;
+  }
+  .hcard-del {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px; letter-spacing: 2px;
+    color: var(--red); background: none; border: none;
+    cursor: pointer; text-transform: uppercase; padding: 4px 0;
+  }
+
+  /* ── ABOUT PAGE ── */
+  .about-wrap { padding: 24px 20px 60px; }
+
+  .about-hero {
+    text-align: center; padding: 40px 0 32px;
+    border-bottom: 1px solid #1a1a1a;
+    margin-bottom: 32px;
+  }
+  .about-logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 80px; color: var(--gold);
+    line-height: 1;
+  }
+  .about-tagline {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px; letter-spacing: 4px;
+    color: var(--mid); text-transform: uppercase;
+    margin-top: 8px;
+  }
+
+  .about-step {
+    display: flex; gap: 20px;
+    padding: 20px 0;
+    border-bottom: 1px solid #111;
+  }
+  .about-letter {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 56px; color: var(--gold);
+    line-height: 1; width: 40px; flex-shrink: 0;
+  }
+  .about-step-content {}
+  .about-step-word {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 26px; letter-spacing: 2px; color: var(--white);
+  }
+  .about-step-desc {
+    font-size: 13px; color: var(--light);
+    line-height: 1.7; margin-top: 4px;
+  }
+  .about-step-q {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px; color: var(--gold);
+    margin-top: 8px; letter-spacing: 1px;
+  }
+
+  .principles-list { margin-top: 32px; }
+  .principle-item {
+    padding: 16px 0;
+    border-bottom: 1px solid #111;
+    font-size: 14px; color: var(--light);
+    line-height: 1.6;
+    font-style: italic;
+  }
+  .principle-item::before {
+    content: '— ';
+    color: var(--gold);
+  }
+
+  .share-section {
+    margin-top: 32px; padding: 24px;
+    background: var(--gray);
+    border: 1px solid #222;
+    text-align: center;
+  }
+  .share-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px; letter-spacing: 3px;
+    color: var(--light); text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  .share-link {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px; color: var(--gold);
+    word-break: break-all; margin-bottom: 16px;
+    line-height: 1.6;
+  }
+  .btn-copy {
+    background: var(--gold); color: var(--black);
+    font-family: 'DM Mono', monospace;
+    font-size: 10px; letter-spacing: 3px;
+    text-transform: uppercase;
+    border: none; padding: 12px 28px;
+    cursor: pointer; width: 100%;
+    transition: background 0.2s;
+  }
+  .btn-copy.copied { background: #3a9c5a; color: #fff; }
+
+  .btn-whatsapp {
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    background: var(--green); color: #fff;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px; letter-spacing: 3px;
+    text-transform: uppercase;
+    border: none; padding: 14px 28px;
+    cursor: pointer; width: 100%; margin-top: 10px;
+    text-decoration: none;
+    transition: opacity 0.2s;
+  }
+
+  /* ── TOAST ── */
+  #toast {
+    position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%);
+    background: var(--gray3); color: var(--white);
+    font-family: 'DM Mono', monospace; font-size: 11px;
+    letter-spacing: 2px; padding: 10px 20px;
+    border-radius: 20px; z-index: 9999;
+    opacity: 0; transition: opacity 0.3s;
+    white-space: nowrap; pointer-events: none;
+  }
+  #toast.show { opacity: 1; }
+
+  /* ── STREAK ── */
+  .streak-bar {
+    background: var(--gray);
+    border-bottom: 1px solid #1a1a1a;
+    padding: 10px 20px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .streak-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px; color: var(--gold); line-height: 1;
+  }
+  .streak-info { flex: 1; }
+  .streak-title {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px; letter-spacing: 3px;
+    color: var(--light); text-transform: uppercase;
+  }
+  .streak-sub { font-size: 11px; color: var(--mid); margin-top: 2px; }
+
+  .avg-score {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px; color: var(--gold);
+  }
+  .avg-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 8px; color: var(--mid);
+    text-transform: uppercase; letter-spacing: 2px;
+  }
+</style>
+</head>
+<body>
+
+<!-- SPLASH -->
+<div id="splash">
+  <div class="splash-logo">TPAT</div>
+  <div class="splash-tag">Think · Plan · Act · Track</div>
+</div>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-brand">TPAT</div>
+  <div class="nav-date" id="navDate"></div>
+  <div class="nav-score" id="navScore" onclick="goTab('history')">— / 10</div>
+</nav>
+
+<!-- TABS -->
+<div class="tabs">
+  <button class="tab active" onclick="goTab('planner')">📋 Today</button>
+  <button class="tab" onclick="goTab('history')">📅 History</button>
+  <button class="tab" onclick="goTab('about')">ℹ About</button>
+</div>
+
+<!-- ══ PLANNER PAGE ══ -->
+<div class="page active" id="page-planner">
+  <div class="planner-wrap">
+
+    <!-- Focus Word -->
+    <div class="focus-row">
+      <div class="focus-label">Focus Word</div>
+      <input type="text" class="focus-input" id="focusWord" placeholder="E.g. DISCIPLINE" maxlength="20">
+    </div>
+
+    <!-- THINK -->
+    <div class="section-block">
+      <div class="section-head">
+        <div class="section-letter">T</div>
+        <div class="section-info">
+          <div class="section-title">Think</div>
+          <div class="section-q">What do I need to think clearly about today?</div>
+        </div>
+      </div>
+      <div class="section-body">
+        <textarea id="think" rows="4" placeholder="Write your thoughts here. What challenge, decision, or focus needs clarity today?"></textarea>
+      </div>
+    </div>
+
+    <!-- PLAN -->
+    <div class="section-block">
+      <div class="section-head">
+        <div class="section-letter">P</div>
+        <div class="section-info">
+          <div class="section-title">Plan</div>
+          <div class="section-q">My top 3 actions today</div>
+        </div>
+      </div>
+      <div class="section-body">
+        <div class="plan-item"><div class="plan-num">1.</div><input type="text" id="plan1" placeholder="First priority action"></div>
+        <div class="plan-item"><div class="plan-num">2.</div><input type="text" id="plan2" placeholder="Second priority action"></div>
+        <div class="plan-item"><div class="plan-num">3.</div><input type="text" id="plan3" placeholder="Third priority action"></div>
+        <div style="margin-top:14px;">
+          <div class="track-label">Why do these matter?</div>
+          <textarea id="planWhy" rows="2" placeholder="One line. Why are these 3 the right focus today?"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- ACT -->
+    <div class="section-block">
+      <div class="section-head">
+        <div class="section-letter">A</div>
+        <div class="section-info">
+          <div class="section-title">Act</div>
+          <div class="section-q">What did I actually do today? Be honest.</div>
+        </div>
+      </div>
+      <div class="section-body">
+        <div class="plan-item"><div class="plan-num">✓</div><input type="text" id="act1" placeholder="What you actually completed"></div>
+        <div class="plan-item"><div class="plan-num">✓</div><input type="text" id="act2" placeholder="Second thing done"></div>
+        <div class="plan-item"><div class="plan-num">✓</div><input type="text" id="act3" placeholder="Third thing done"></div>
+      </div>
+    </div>
+
+    <!-- TRACK -->
+    <div class="section-block">
+      <div class="section-head">
+        <div class="section-letter">T</div>
+        <div class="section-info">
+          <div class="section-title">Track</div>
+          <div class="section-q">End of day review</div>
+        </div>
+      </div>
+      <div class="section-body">
+        <div class="track-row">
+          <div class="track-label">What went well?</div>
+          <textarea id="trackWell" rows="2" placeholder="Celebrate the wins, big or small."></textarea>
+        </div>
+        <div class="track-row">
+          <div class="track-label">What didn't go well?</div>
+          <textarea id="trackBad" rows="2" placeholder="Be honest. No growth without honesty."></textarea>
+        </div>
+        <div class="track-row">
+          <div class="track-label">What will I do differently tomorrow?</div>
+          <textarea id="trackChange" rows="2" placeholder="One specific change you'll make."></textarea>
+        </div>
+        <div class="track-row">
+          <div class="track-label">Day Score</div>
+          <div class="score-wrap">
+            <div class="score-display" id="scoreDisplay">5 <span>/ 10</span></div>
+            <input type="range" id="scoreRange" min="1" max="10" value="5" oninput="updateScore(this.value)">
+            <div class="score-labels"><span>1 — Disaster</span><span>10 — Perfect</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- SAVE BAR -->
+  <div class="save-bar">
+    <button class="btn-save" id="saveBtn" onclick="saveDay()">Save Today's Entry</button>
+    <button class="btn-share" onclick="shareToday()" title="Share on WhatsApp">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- ══ HISTORY PAGE ══ -->
+<div class="page" id="page-history">
+  <div id="streakBar" class="streak-bar" style="display:none">
+    <div>
+      <div class="streak-title">Current Streak</div>
+      <div class="streak-num" id="streakNum">0</div>
+    </div>
+    <div class="streak-info">
+      <div class="streak-sub">days in a row</div>
+    </div>
+    <div style="text-align:right">
+      <div class="avg-score" id="avgScore">—</div>
+      <div class="avg-label">Avg Score</div>
+    </div>
+  </div>
+  <div class="history-wrap" id="historyList"></div>
+</div>
+
+<!-- ══ ABOUT PAGE ══ -->
+<div class="page" id="page-about">
+  <div class="about-wrap">
+    <div class="about-hero">
+      <div class="about-logo">TPAT</div>
+      <div class="about-tagline">A Daily Execution System</div>
+    </div>
+
+    <div class="about-step">
+      <div class="about-letter">T</div>
+      <div class="about-step-content">
+        <div class="about-step-word">Think</div>
+        <div class="about-step-desc">Before you move, gain clarity. Most mistakes happen in the thinking stage — or the absence of it. Think before you act.</div>
+        <div class="about-step-q">→ What do I need to think clearly about today?</div>
+      </div>
+    </div>
+    <div class="about-step">
+      <div class="about-letter">P</div>
+      <div class="about-step-content">
+        <div class="about-step-word">Plan</div>
+        <div class="about-step-desc">A plan converts thought into direction. Without it, effort scatters. Choose your top 3 actions. Not ten — three that truly matter.</div>
+        <div class="about-step-q">→ What are my 3 most important actions today?</div>
+      </div>
+    </div>
+    <div class="about-step">
+      <div class="about-letter">A</div>
+      <div class="about-step-content">
+        <div class="about-step-word">Act</div>
+        <div class="about-step-desc">Execution is where frameworks die. Act before you feel ready. Discipline carries you when motivation doesn't show up.</div>
+        <div class="about-step-q">→ What did I actually do today?</div>
+      </div>
+    </div>
+    <div class="about-step">
+      <div class="about-letter">T</div>
+      <div class="about-step-content">
+        <div class="about-step-word">Track</div>
+        <div class="about-step-desc">Tracking closes the loop. The person who tracks is the person who compounds — day after day, week after week.</div>
+        <div class="about-step-q">→ What went well? What didn't? What changes tomorrow?</div>
+      </div>
+    </div>
+
+    <div class="principles-list">
+      <div class="principle-item">Discipline is the bridge between where you are and where you want to be.</div>
+      <div class="principle-item">Always think before you act.</div>
+      <div class="principle-item">Choose the pain of discipline over the pain of regret.</div>
+      <div class="principle-item">The person who tracks is the person who compounds.</div>
+      <div class="principle-item">Don't chase. Prepare. Build before you beg.</div>
+      <div class="principle-item">One day done right is better than seven days done carelessly.</div>
+    </div>
+
+    <div class="share-section" style="margin-top:32px;">
+      <div class="share-label">Share TPAT with your network</div>
+      <div class="share-link" id="appUrl">Loading...</div>
+      <button class="btn-copy" id="copyBtn" onclick="copyLink()">Copy Link</button>
+      <a id="waShareBtn" href="#" target="_blank" class="btn-whatsapp">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+        Share on WhatsApp
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script>
+// ── STATE ──
+const TODAY = new Date().toISOString().split('T')[0];
+const STORAGE_KEY = 'tpat_entries';
+
+function getEntries() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); }
+  catch(e) { return {}; }
+}
+function saveEntries(data) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+// ── INIT ──
+window.addEventListener('load', () => {
+  // Hide splash
+  setTimeout(() => document.getElementById('splash').classList.add('hidden'), 1200);
+
+  // Set date in nav
+  const d = new Date();
+  document.getElementById('navDate').textContent = d.toLocaleDateString('en-KE', { weekday:'short', month:'short', day:'numeric' });
+
+  // Load today's entry
+  loadToday();
+  updateNavScore();
+
+  // Set app URL for sharing
+  const url = window.location.href;
+  document.getElementById('appUrl').textContent = url;
+  document.getElementById('waShareBtn').href = `https://wa.me/?text=${encodeURIComponent('🔥 TPAT Daily Planner — Think. Plan. Act. Track.\n\nThis is the daily execution system I use to stay focused and build discipline every day.\n\nOpen it here 👇\n' + url)}`;
+});
+
+function loadToday() {
+  const entries = getEntries();
+  const entry = entries[TODAY];
+  if (!entry) return;
+  document.getElementById('focusWord').value = entry.focusWord || '';
+  document.getElementById('think').value = entry.think || '';
+  document.getElementById('plan1').value = entry.plan1 || '';
+  document.getElementById('plan2').value = entry.plan2 || '';
+  document.getElementById('plan3').value = entry.plan3 || '';
+  document.getElementById('planWhy').value = entry.planWhy || '';
+  document.getElementById('act1').value = entry.act1 || '';
+  document.getElementById('act2').value = entry.act2 || '';
+  document.getElementById('act3').value = entry.act3 || '';
+  document.getElementById('trackWell').value = entry.trackWell || '';
+  document.getElementById('trackBad').value = entry.trackBad || '';
+  document.getElementById('trackChange').value = entry.trackChange || '';
+  const score = entry.score || 5;
+  document.getElementById('scoreRange').value = score;
+  updateScore(score);
+}
+
+function updateScore(val) {
+  document.getElementById('scoreDisplay').innerHTML = `${val} <span>/ 10</span>`;
+  document.getElementById('navScore').textContent = `${val} / 10`;
+}
+
+function updateNavScore() {
+  const entries = getEntries();
+  const entry = entries[TODAY];
+  if (entry && entry.score) {
+    document.getElementById('navScore').textContent = `${entry.score} / 10`;
+  }
+}
+
+// ── SAVE ──
+function saveDay() {
+  const entries = getEntries();
+  entries[TODAY] = {
+    date: TODAY,
+    focusWord: document.getElementById('focusWord').value,
+    think: document.getElementById('think').value,
+    plan1: document.getElementById('plan1').value,
+    plan2: document.getElementById('plan2').value,
+    plan3: document.getElementById('plan3').value,
+    planWhy: document.getElementById('planWhy').value,
+    act1: document.getElementById('act1').value,
+    act2: document.getElementById('act2').value,
+    act3: document.getElementById('act3').value,
+    trackWell: document.getElementById('trackWell').value,
+    trackBad: document.getElementById('trackBad').value,
+    trackChange: document.getElementById('trackChange').value,
+    score: parseInt(document.getElementById('scoreRange').value),
+    savedAt: new Date().toISOString()
+  };
+  saveEntries(entries);
+
+  const btn = document.getElementById('saveBtn');
+  btn.textContent = '✓ Saved';
+  btn.classList.add('saved');
+  setTimeout(() => { btn.textContent = 'Save Today\'s Entry'; btn.classList.remove('saved'); }, 2000);
+  showToast('Entry saved ✓');
+  updateNavScore();
+}
+
+// ── SHARE TODAY ──
+function shareToday() {
+  const e = {
+    focusWord: document.getElementById('focusWord').value,
+    plan1: document.getElementById('plan1').value,
+    plan2: document.getElementById('plan2').value,
+    plan3: document.getElementById('plan3').value,
+    score: document.getElementById('scoreRange').value,
+    trackWell: document.getElementById('trackWell').value,
+    trackChange: document.getElementById('trackChange').value,
+  };
+  const d = new Date().toLocaleDateString('en-KE', { weekday:'long', month:'long', day:'numeric' });
+  let msg = `📋 *TPAT Daily Entry — ${d}*\n`;
+  if (e.focusWord) msg += `\n🎯 Focus: *${e.focusWord}*\n`;
+  msg += `\n📌 *PLAN*\n`;
+  if (e.plan1) msg += `1. ${e.plan1}\n`;
+  if (e.plan2) msg += `2. ${e.plan2}\n`;
+  if (e.plan3) msg += `3. ${e.plan3}\n`;
+  if (e.trackWell) msg += `\n✅ *What went well:* ${e.trackWell}\n`;
+  if (e.trackChange) msg += `\n🔄 *Tomorrow:* ${e.trackChange}\n`;
+  msg += `\n📊 *Day Score: ${e.score}/10*\n`;
+  msg += `\n─────────────────\n_TPAT | Think. Plan. Act. Track._`;
+  window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+}
+
+// ── TABS ──
+function goTab(name) {
+  document.querySelectorAll('.tab').forEach((t,i) => {
+    const names = ['planner','history','about'];
+    t.classList.toggle('active', names[i] === name);
+  });
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  if (name === 'history') renderHistory();
+  window.scrollTo(0,0);
+}
+
+// ── HISTORY ──
+function renderHistory() {
+  const entries = getEntries();
+  const keys = Object.keys(entries).sort((a,b) => b.localeCompare(a));
+  const list = document.getElementById('historyList');
+
+  if (keys.length === 0) {
+    list.innerHTML = `<div class="history-empty"><span class="big">TPAT</span>No entries yet.<br>Complete your first day to see history.</div>`;
+    document.getElementById('streakBar').style.display = 'none';
+    return;
+  }
+
+  // Streak
+  let streak = 0;
+  const today = new Date(); today.setHours(0,0,0,0);
+  for (let i = 0; i <= 365; i++) {
+    const d = new Date(today); d.setDate(d.getDate() - i);
+    const key = d.toISOString().split('T')[0];
+    if (entries[key]) streak++;
+    else if (i > 0) break;
+  }
+  document.getElementById('streakNum').textContent = streak;
+  const scores = keys.map(k => entries[k].score || 0);
+  const avg = (scores.reduce((a,b) => a+b, 0) / scores.length).toFixed(1);
+  document.getElementById('avgScore').textContent = avg;
+  document.getElementById('streakBar').style.display = 'flex';
+
+  // Cards
+  list.innerHTML = keys.map(key => {
+    const e = entries[key];
+    const d = new Date(key + 'T00:00:00');
+    const label = d.toLocaleDateString('en-KE', { weekday:'short', month:'short', day:'numeric', year:'numeric' });
+    const plans = [e.plan1, e.plan2, e.plan3].filter(Boolean);
+    const scoreColor = e.score >= 8 ? '#3a9c5a' : e.score >= 5 ? '#c9a84c' : '#e05252';
+    return `
+      <div class="history-card">
+        <div class="hcard-head">
+          <div>
+            <div class="hcard-date">${label}</div>
+            ${e.focusWord ? `<div class="hcard-focus">${e.focusWord}</div>` : ''}
+          </div>
+          <div class="hcard-score" style="color:${scoreColor}">${e.score || '—'}<span style="font-size:14px;color:#555">/10</span></div>
+        </div>
+        ${plans.length ? `<div class="hcard-body">
+          <div class="hcard-preview">${plans.map((p,i) => `${i+1}. ${p}`).join('<br>')}</div>
+        </div>` : ''}
+        <div class="hcard-actions">
+          <button class="hcard-del" onclick="deleteEntry('${key}')">Delete</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function deleteEntry(key) {
+  if (!confirm('Delete this entry?')) return;
+  const entries = getEntries();
+  delete entries[key];
+  saveEntries(entries);
+  renderHistory();
+  showToast('Entry deleted');
+}
+
+// ── COPY LINK ──
+function copyLink() {
+  const url = window.location.href;
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(url).then(() => {
+      const btn = document.getElementById('copyBtn');
+      btn.textContent = '✓ Copied!';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = 'Copy Link'; btn.classList.remove('copied'); }, 2000);
+    });
+  } else {
+    // Fallback
+    const el = document.createElement('textarea');
+    el.value = url; document.body.appendChild(el);
+    el.select(); document.execCommand('copy');
+    document.body.removeChild(el);
+    showToast('Link copied ✓');
+  }
+}
+
+// ── TOAST ──
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+// Auto-save on input
+['think','plan1','plan2','plan3','planWhy','act1','act2','act3','trackWell','trackBad','trackChange','focusWord'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('input', () => {
+    clearTimeout(el._timer);
+    el._timer = setTimeout(saveDay, 1500);
+  });
+});
+document.getElementById('scoreRange').addEventListener('input', () => {
+  updateScore(document.getElementById('scoreRange').value);
+  clearTimeout(window._scoreTimer);
+  window._scoreTimer = setTimeout(saveDay, 1500);
+});
+</script>
+</body>
+</html>
